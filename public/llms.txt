@@ -1,0 +1,10 @@
+## Pages
+- [Confirming Account - Prestimate](/authcallback): Finalizing your account confirmation.
+- [Payment Canceled - Prestimate](/stripecancel): Your payment was canceled. Please try again or contact support if you face any issues.
+- [Prestimate - AI Estimator for Service Businesses](/landing): Generate instant, accurate estimates for pressure washing, lawncare, landscaping, and more. Capture leads and grow your business with Prestimate.
+- [Prestimate Widget](/widget): View your Prestimate widget.
+- [Redirecting to Checkout - Prestimate](/onboarding): Please wait while we redirect you to our secure checkout page.
+- [Set Your Password - Prestimate](/createaccount): Finalize your Prestimate account setup by setting a password.
+- [Start Your Free Trial - Prestimate](/onboardingtrial): Sign up for a free trial of Prestimate and start generating instant estimates.
+- [Start Your Free Trial - Prestimate](/trialsignup): Sign up for a free 30-day trial of Prestimate.
+- [Welcome to Prestimate!](/welcome): Finalizing your account setup.
