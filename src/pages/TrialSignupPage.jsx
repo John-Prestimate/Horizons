@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Building, ArrowRight, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Mail, Lock, User, Building, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,6 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 const TrialSignupPage = () => {
-  const navigate = useNavigate();
   const { signUp } = useAuth();
   const { toast } = useToast();
   
@@ -22,6 +22,7 @@ const TrialSignupPage = () => {
   const [fullName, setFullName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -47,25 +48,53 @@ const TrialSignupPage = () => {
         return;
     }
 
-    const { data, error } = await signUp(email, password, {
+    const { error } = await signUp(email, password, {
       data: {
         full_name: fullName,
         business_name: businessName,
       }
     });
 
-    if (error) {
-       // The signUp function in the context already shows a toast on error
-    } else if (data.user) {
-      toast({
-        title: "Account Created Successfully!",
-        description: "Welcome to Prestimate! You are now being redirected.",
-      });
-      navigate('/welcome-onboarding');
-    }
-
     setLoading(false);
+    if (!error) {
+      setIsSuccess(true);
+    }
   };
+
+  if (isSuccess) {
+    return (
+      <>
+        <Helmet>
+          <title>Check Your Email - Prestimate</title>
+        </Helmet>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100 flex items-center justify-center p-4">
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <Card className="w-full max-w-lg shadow-2xl text-center">
+              <CardHeader>
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: 'spring' }}>
+                  <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
+                </motion.div>
+                <CardTitle className="text-3xl font-bold text-gray-800 mt-4">Account Created!</CardTitle>
+                <CardDescription className="text-gray-600 text-lg">
+                  Please check your inbox to confirm your email address.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500">
+                  We've sent a confirmation link to <strong>{email}</strong>. Click the link in the email to activate your account and log in.
+                </p>
+              </CardContent>
+              <CardFooter>
+                <Button asChild className="w-full hero-gradient text-white font-bold">
+                  <Link to="/">Back to Home</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          </motion.div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -132,7 +161,7 @@ const TrialSignupPage = () => {
               </form>
             </CardContent>
             <CardFooter className="text-center text-xs text-gray-500">
-              <p>By signing up, you agree to our Terms of Service. We will send a confirmation link to your email.</p>
+              <p>By signing up, you agree to our Terms of Service. A confirmation link will be sent to your email.</p>
             </CardFooter>
           </Card>
         </motion.div>

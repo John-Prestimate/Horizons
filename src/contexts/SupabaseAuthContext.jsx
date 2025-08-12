@@ -1,6 +1,7 @@
+
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/customSupabaseClient';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const AuthContext = createContext(undefined);
 
@@ -8,70 +9,72 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
+  const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchCustomerData = useCallback(async (userId) => {
-    if (!userId) return null;
+  const { toast } = useToast();
+
+  const fetchAllUserData = useCallback(async (userId) => {
     try {
-      const { data, error } = await supabase
+      if (!userId) {
+        setCustomer(null);
+        setSettings(null);
+        return;
+      }
+  
+      const customerPromise = supabase
         .from('customers')
         .select('*')
         .eq('auth_id', userId)
         .single();
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+
+      const settingsPromise = supabase
+        .from('business_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      const [{ data: customerData, error: customerError }, { data: settingsData, error: settingsError }] = await Promise.all([customerPromise, settingsPromise]);
+
+      if (customerError && customerError.code !== 'PGRST116') throw customerError;
+      if (settingsError && settingsError.code !== 'PGRST116') throw settingsError;
+
+      setCustomer(customerData);
+      setSettings(settingsData);
     } catch (error) {
-      console.error('Error fetching customer data:', error);
+      console.error('Error fetching user data:', error);
       toast({
         variant: "destructive",
         title: "Error loading account",
-        description: "Could not fetch your account details.",
+        description: "Could not fetch your account details. Please try again.",
       });
-      return null;
+      setCustomer(null);
+      setSettings(null);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
-    const initializeSession = async () => {
-      setLoading(true);
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      
-      setSession(initialSession);
-      const currentUser = initialSession?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        const customerData = await fetchCustomerData(currentUser.id);
-        setCustomer(customerData);
-      } else {
-        setCustomer(null);
-      }
-      setLoading(false);
-    };
-
-    initializeSession();
+    let isMounted = true;
+    setLoading(true);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        const currentUser = session?.user ?? null;
+      async (_event, newSession) => {
+        if (!isMounted) return;
+
+        setSession(newSession);
+        const currentUser = newSession?.user ?? null;
         setUser(currentUser);
-        
-        if (currentUser) {
-          const customerData = await fetchCustomerData(currentUser.id);
-          setCustomer(customerData);
-        } else {
-          setCustomer(null);
-        }
-        
-        // No setLoading here, as initial load is handled above
+        await fetchAllUserData(currentUser?.id);
+
+        setLoading(false);
       }
     );
 
     return () => {
-      subscription.unsubscribe();
+      isMounted = false;
+      subscription?.unsubscribe();
     };
-  }, [fetchCustomerData]);
+  }, [fetchAllUserData]);
   
   const signUp = useCallback(async (email, password, options) => {
     const { data, error } = await supabase.auth.signUp({
@@ -79,6 +82,7 @@ export const AuthProvider = ({ children }) => {
       password,
       options,
     });
+    
     if (error) {
       toast({
         variant: "destructive",
@@ -87,13 +91,14 @@ export const AuthProvider = ({ children }) => {
       });
     }
     return { data, error };
-  }, []);
+  }, [toast]);
 
   const signIn = useCallback(async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
     if (error) {
       toast({
         variant: "destructive",
@@ -102,7 +107,7 @@ export const AuthProvider = ({ children }) => {
       });
     }
     return { data, error };
-  }, []);
+  }, [toast]);
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
@@ -114,17 +119,18 @@ export const AuthProvider = ({ children }) => {
       });
     }
     return { error };
-  }, []);
+  }, [toast]);
 
   const value = useMemo(() => ({
     user,
     session,
     customer,
+    settings,
     loading,
     signUp,
     signIn,
     signOut,
-  }), [user, session, customer, loading, signUp, signIn, signOut]);
+  }), [user, session, customer, settings, loading, signUp, signIn, signOut]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

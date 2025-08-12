@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from '@/pages/LandingPage';
 import WidgetPage from '@/pages/WidgetPage';
 import WidgetInstructionsPage from '@/pages/WidgetInstructionsPage';
@@ -7,7 +7,7 @@ import StripeCancelPage from '@/pages/StripeCancelPage';
 import WelcomePage from '@/pages/WelcomePage';
 import CreateAccountPage from '@/pages/CreateAccountPage';
 import HowToEmbedPage from '@/pages/HowToEmbedPage';
-import AppDashboardPage from '@/pages/AppDashboardPage';
+import DashboardPage from '@/pages/DashboardPage';
 import OnboardingTrialPage from '@/pages/OnboardingTrialPage';
 import TrialSignupPage from '@/pages/TrialSignupPage';
 import AuthCallbackPage from '@/pages/AuthCallbackPage';
@@ -28,11 +28,12 @@ function App() {
         <Route path="/welcome-onboarding" element={<WelcomeOnboardingPage />} />
         <Route path="/create-account" element={<CreateAccountPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route path="/app" element={
+        <Route path="/dashboard" element={
           <ProtectedRoute>
-            <AppDashboardPage />
+            <DashboardPage />
           </ProtectedRoute>
         } />
+        <Route path="/app" element={<Navigate to="/dashboard" replace />} />
         <Route path="/start-trial" element={<OnboardingTrialPage />} />
         <Route path="/trial-signup" element={<TrialSignupPage />} />
       </Routes>
